@@ -1,30 +1,30 @@
 {
-   name: arthub-project-server,
-  version: 1.0.0,
-  description: Backend API server for ArtHub Online Art Marketplace,
-  main: index.js,
-  scripts: {
-    start: node index.js,
-    dev: node index.js,
-    seed: node seed.js,
-    test: node test-api.js
+  "name": "arthub-project-server",
+  "version": "1.0.0",
+  "description": "Backend API server for ArtHub Online Art Marketplace",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "seed": "node seed.js",
+    "test": "node test-api.js"
   },
-  keywords: [
-    arthub,
-    marketplace,
-    express,
-    mongodb,
-    art
+  "keywords": [
+    "arthub",
+    "marketplace",
+    "express",
+    "mongodb",
+    "art"
   ],
-  author: ArtHub Team,
-  license: ISC,
-  dependencies: {
-    bcryptjs: ^2.4.3,
-    cors: ^2.8.6,
-    dotenv: ^18.0.4,
-    express: ^5.2.1,
-    jsonwebtoken: ^9.0.2,
-    mongodb: ^7.7.0,
-    stripe: ^17.0.0
+  "author": "ArtHub Team",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.4",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.7.0",
+    "stripe": "^17.0.0"
   }
 }
