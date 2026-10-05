@@ -1,7 +1,5 @@
- node_modules
+node_modules/
 .env
+.env.local
 .DS_Store
-*.log\; Set-Content -Path 'F:\arthub-project-server\.env.example' -Value \PORT=5000
-MONGO_URI=your_mongodb_uri
-STRIPE_SECRET_KEY=your_stripe_secret_key
-JWT_SECRET=your_jwt_secret
+*.log
