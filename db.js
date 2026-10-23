@@ -11,9 +11,13 @@ let db;
 
 async function connectDB() {
   if (db) return { db, client };
+  
   client = new MongoClient(uri);
+  
   await client.connect();
+  
   db = client.db(process.env.DB_NAME || "arthub-project-db");
+ 
   console.log("Connected to MongoDB:", db.databaseName);
   return { db, client };
 }

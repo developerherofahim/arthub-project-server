@@ -1,9 +1,10 @@
 const express = require("express");
 const { getDB, ObjectId } = require("../db");
+const { requireAuth, requireRole } = require("../middleware/auth");
 const router = express.Router();
 
 // GET /users - All users for admin
-router.get("/", async (req, res) => {
+router.get("/", requireAuth, requireRole("admin"), async (req, res) => {
   try {
     const db = getDB();
     const users = await db.collection("user").find({}).sort({ createdAt: -1 }).toArray();
@@ -23,7 +24,7 @@ router.get("/", async (req, res) => {
 });
 
 // PATCH /users/:id/role - Update role
-router.patch("/:id/role", async (req, res) => {
+router.patch("/:id/role", requireAuth, requireRole("admin"), async (req, res) => {
   try {
     const db = getDB();
     const { id } = req.params;
@@ -41,11 +42,14 @@ router.patch("/:id/role", async (req, res) => {
 });
 
 // GET /users/profile - Get profile by email
-router.get("/profile", async (req, res) => {
+router.get("/profile", requireAuth, async (req, res) => {
   try {
     const db = getDB();
     const { email } = req.query;
     if (!email) return res.status(400).json({ error: "Email required" });
+    if (email !== req.auth.email && req.auth.role !== "admin") {
+      return res.status(403).json({ error: "You can only view your own profile." });
+    }
     const user = await db.collection("user").findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
     const purchaseCount = await db.collection("transactions").countDocuments({ buyerEmail: email, status: "completed" });
@@ -66,16 +70,15 @@ router.get("/profile", async (req, res) => {
 });
 
 // PATCH /users/profile - Update user profile
-router.patch("/profile", async (req, res) => {
+router.patch("/profile", requireAuth, async (req, res) => {
   try {
     const db = getDB();
-    const { email, name, bio, image } = req.body;
-    if (!email) return res.status(400).json({ error: "Email required" });
+    const { name, bio, image } = req.body;
     const update = { updatedAt: new Date() };
     if (name) update.name = name.trim();
     if (bio !== undefined) update.bio = bio.trim();
     if (image) update.image = image;
-    await db.collection("user").updateOne({ email }, { $set: update });
+    await db.collection("user").updateOne({ email: req.auth.email }, { $set: update });
     res.json({ success: true, message: "Profile updated" });
   } catch (err) {
     res.status(500).json({ error: "Failed to update profile" });
@@ -83,17 +86,17 @@ router.patch("/profile", async (req, res) => {
 });
 
 // POST /users/wishlist - Toggle artwork in wishlist
-router.post("/wishlist", async (req, res) => {
+router.post("/wishlist", requireAuth, async (req, res) => {
   try {
     const db = getDB();
-    const { email, artworkId } = req.body;
-    if (!email || !artworkId) return res.status(400).json({ error: "email and artworkId required" });
-    const user = await db.collection("user").findOne({ email });
+    const { artworkId } = req.body;
+    if (!artworkId) return res.status(400).json({ error: "artworkId required" });
+    const user = await db.collection("user").findOne({ email: req.auth.email });
     if (!user) return res.status(404).json({ error: "User not found" });
     const wishlist = Array.isArray(user.wishlist) ? user.wishlist : [];
     const exists = wishlist.includes(artworkId);
     const nextWishlist = exists ? wishlist.filter(id => id !== artworkId) : [...wishlist, artworkId];
-    await db.collection("user").updateOne({ email }, { $set: { wishlist: nextWishlist } });
+    await db.collection("user").updateOne({ email: req.auth.email }, { $set: { wishlist: nextWishlist } });
     res.json({ success: true, wishlist: nextWishlist, added: !exists });
   } catch (err) {
     res.status(500).json({ error: "Failed to toggle wishlist" });
@@ -101,11 +104,14 @@ router.post("/wishlist", async (req, res) => {
 });
 
 // GET /users/wishlist - Get wishlist items
-router.get("/wishlist", async (req, res) => {
+router.get("/wishlist", requireAuth, async (req, res) => {
   try {
     const db = getDB();
     const { email } = req.query;
     if (!email) return res.status(400).json({ error: "Email required" });
+    if (email !== req.auth.email && req.auth.role !== "admin") {
+      return res.status(403).json({ error: "You can only view your own wishlist." });
+    }
     const user = await db.collection("user").findOne({ email });
     const ids = user?.wishlist || [];
     const objIds = ids.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));

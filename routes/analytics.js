@@ -1,9 +1,10 @@
 const express = require("express");
 const { getDB } = require("../db");
+const { requireAuth, requireRole } = require("../middleware/auth");
 const router = express.Router();
 
 // GET /analytics/admin
-router.get("/admin", async (req, res) => {
+router.get("/admin", requireAuth, requireRole("admin"), async (req, res) => {
   try {
     const db = getDB();
     const [totalUsers, totalArtists, totalSold, totalArtworks, transactions] = await Promise.all([
@@ -45,10 +46,13 @@ router.get("/admin", async (req, res) => {
 });
 
 // GET /analytics/artist/:email
-router.get("/artist/:email", async (req, res) => {
+router.get("/artist/:email", requireAuth, async (req, res) => {
   try {
     const db = getDB();
     const { email } = req.params;
+    if (req.auth.role !== "admin" && (req.auth.role !== "artist" || email !== req.auth.email)) {
+      return res.status(403).json({ error: "You can only view your own artist analytics." });
+    }
     const [totalArtworks, activeListings, sales] = await Promise.all([
       db.collection("artworks").countDocuments({ artistEmail: email }),
       db.collection("artworks").countDocuments({ artistEmail: email, status: "available" }),
